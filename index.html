@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Parcelas Profissional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-calc {
+            background-color: #1e40af;
+            transition: all 0.2s;
+        }
+        .btn-calc:hover {
+            background-color: #1e3a8a;
+        }
+        .btn-copy {
+            background-color: #059669;
+        }
+        .btn-copy:hover {
+            background-color: #047857;
+        }
+        input::placeholder {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="card w-full max-w-md p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 class="text-xl font-bold text-slate-800">Formalização de Contrato</h1>
+            <p class="text-sm text-slate-500">Confirmação de valores e carência</p>
+        </div>
+
+        <div class="space-y-5">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Valor Contratado (R$)</label>
+                <input type="text" id="valor" placeholder="Ex: 50.000,00" oninput="formatarMoeda(this)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Plano de Parcelamento</label>
+                <input type="number" id="parcelas" placeholder="Ex: 48" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Data de Vencimento Confirmada</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setDia(5)" class="dia-btn p-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-all">05</button>
+                    <button onclick="setDia(10)" class="dia-btn p-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-all">10</button>
+                    <button onclick="setDia(22)" class="dia-btn p-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-all">22</button>
+                    <button onclick="setDia(28)" class="dia-btn p-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-all">28</button>
+                </div>
+            </div>
+
+            <button onclick="calcular()" class="w-full btn-calc text-white font-bold py-3.5 rounded-lg shadow-lg uppercase tracking-widest text-sm">
+                Gerar Termos de Contrato
+            </button>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado" class="hidden mt-8 border-t border-slate-100 pt-6">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-slate-500">Valor Contratado:</span> <span class="font-bold text-slate-800" id="resValor"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Parcelamento:</span> <span class="font-bold text-slate-800" id="resParcelas"></span></div>
+                <div class="flex justify-between border-t border-slate-200 pt-2"><span class="text-slate-500">Custo Total:</span> <span class="font-bold text-blue-700" id="resValorFinal"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span> <span class="font-bold text-slate-800">Dia <span id="resDia"></span></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Carência:</span> <span class="font-bold text-slate-800">90 dias</span></div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-600 rounded-xl text-center">
+                <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Primeiro Vencimento</p>
+                <p class="text-white font-bold text-xl" id="resDataFinal"></p>
+            </div>
+
+            <button id="btnCopiar" onclick="copiarTexto()" class="w-full btn-copy text-white font-bold py-3.5 rounded-lg mt-6 flex items-center justify-center gap-2 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                <span id="copyText">Copiar para WhatsApp</span>
+            </button>
+            <p id="msgCopiado" class="text-center text-xs text-emerald-600 mt-2 font-medium opacity-0 transition-opacity">Contrato pronto para envio!</p>
+        </div>
+    </div>
+
+    <script>
+        let diaEscolhido = null;
+
+        function formatarMoeda(i) {
+            let v = i.value.replace(/\D/g,'');
+            v = (v/100).toFixed(2) + '';
+            v = v.replace(".", ",");
+            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            i.value = v !== 'NaN' ? 'R$ ' + v : '';
+        }
+
+        function setDia(dia) {
+            diaEscolhido = dia;
+            document.querySelectorAll('.dia-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                btn.classList.add('border-slate-200');
+            });
+            event.target.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+            event.target.classList.remove('border-slate-200');
+        }
+
+        function calcular() {
+            const valorRaw = document.getElementById('valor').value;
+            const parcelasInput = document.getElementById('parcelas').value;
+
+            if (!valorRaw || !parcelasInput || !diaEscolhido) {
+                return;
+            }
+
+            const valor = parseFloat(valorRaw.replace(/[^\d,]/g, '').replace(',', '.'));
+            const numParcelas = parseInt(parcelasInput);
+            const taxa = 0.0075; 
+            
+            const valorParcela = (valor * taxa) / (1 - Math.pow(1 + taxa, -numParcelas));
+            const valorTotalPago = valorParcela * numParcelas;
+
+            let hoje = new Date(); 
+            let dataLimiteCarencia = new Date();
+            dataLimiteCarencia.setDate(hoje.getDate() + 90); 
+
+            let dataFinal = new Date(dataLimiteCarencia.getFullYear(), dataLimiteCarencia.getMonth(), diaEscolhido);
+
+            if (dataFinal < dataLimiteCarencia) {
+                dataFinal.setMonth(dataFinal.getMonth() + 1);
+            }
+            
+            const dataFormatada = dataFinal.toLocaleDateString('pt-BR');
+
+            document.getElementById('resValor').innerText = valorRaw;
+            document.getElementById('resParcelas').innerText = `${numParcelas}x de R$ ${valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('resValorFinal').innerText = `R$ ${valorTotalPago.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('resDia').innerText = diaEscolhido;
+            document.getElementById('resDataFinal').innerText = dataFormatada;
+
+            document.getElementById('resultado').classList.remove('hidden');
+            
+            const btn = document.getElementById('btnCopiar');
+            btn.classList.remove('bg-emerald-700');
+            document.getElementById('copyText').innerText = "Copiar para WhatsApp";
+            document.getElementById('msgCopiado').classList.add('opacity-0');
+        }
+
+        function copiarTexto() {
+            const valor = document.getElementById('resValor').innerText;
+            const parcelas = document.getElementById('resParcelas').innerText;
+            const valorFinal = document.getElementById('resValorFinal').innerText;
+            const dia = document.getElementById('resDia').innerText;
+            const dataFinal = document.getElementById('resDataFinal').innerText;
+            const mesAno = dataFinal.split('/')[1] + '/' + dataFinal.split('/')[2];
+
+            const texto = `✅ *CONFIRMAÇÃO DE CONTRATAÇÃO*\n\n` +
+                          `*Valor Contratado:* ${valor}\n` +
+                          `*Quantidade de parcelas:* ${parcelas}\n` +
+                          `*Valor final (com taxas):* ${valorFinal}\n` +
+                          `*Carência aplicada:* 90 dias\n` +
+                          `*Dia de vencimento:* ${dia}\n\n` +
+                          `📌 *DATA DA PRIMEIRA PARCELA:* ${dataFinal}\n\n` +
+                          `_CRÉDITO COM CARÊNCIA: Você terá 90 dias de fôlego financeiro. Sua primeira parcela será apenas em ${mesAno}._`;
+
+            const el = document.createElement('textarea');
+            el.value = texto;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            const btn = document.getElementById('btnCopiar');
+            btn.classList.add('bg-emerald-700');
+            document.getElementById('copyText').innerText = "Contrato Copiado!";
+            document.getElementById('msgCopiado').classList.remove('opacity-0');
+        }
+    </script>
